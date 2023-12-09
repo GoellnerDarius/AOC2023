@@ -1,16 +1,12 @@
 pub mod day8 {
     use std::collections::HashMap;
     use std::fs;
-    use std::ops::Deref;
-    use std::time::Instant;
-    use petgraph::Graph;
-    use petgraph::graph::{DiGraph, Node, node_index, NodeIndex};
+    use petgraph::graph::{DiGraph, NodeIndex};
     use petgraph::prelude::EdgeRef;
-    use petgraph::visit::NodeRef;
     use regex::Regex;
 
     pub fn solve() {
-        // part1();
+        part1();
         part2();
     }
 
@@ -91,10 +87,6 @@ pub mod day8 {
                 }
             }
             count += 1;
-            if (count % 1_000_000_000) == 0 {
-                println!("{count}");
-            }
-
             if (finished) {
                 break 'outer;
             }
