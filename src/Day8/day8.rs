@@ -1,11 +1,17 @@
 pub mod day8 {
     use std::collections::HashMap;
     use std::fs;
+    use std::ops::Deref;
     use std::time::Instant;
+    use petgraph::Graph;
+    use petgraph::graph::{DiGraph, Node, node_index, NodeIndex};
+    use petgraph::prelude::EdgeRef;
+    use petgraph::visit::NodeRef;
+    use regex::Regex;
 
     pub fn solve() {
         // part1();
-        part2_1();
+        part2();
     }
 
     fn part1() {
@@ -38,32 +44,35 @@ pub mod day8 {
 
     fn part2() {
         let input = fs::read_to_string("src/Day8/input.txt").unwrap();
-        let lines = input.split("\n").collect::<Vec<&str>>();
-        let mut directions = lines[0].chars().collect::<Vec<char>>();
-        directions.pop();
-        let mut nodes: HashMap<String, String> = HashMap::new();
-        let mut start_points: Vec<String> = Vec::new();
+        let lines: Vec<&str> = input.lines().collect();
+        let directions: Vec<char> = lines[0].chars().collect();
 
-        //Genrate map with the nodes
+        // let mut nodes: HashMap<String, (&str, &str)> = HashMap::new();
+        let mut start_points: Vec<NodeIndex> = Vec::new();
+        let mut node_string: HashMap<&str, NodeIndex> = HashMap::new();
+        let mut graph = DiGraph::new();
         for i in 2..lines.len() {
-            let start = lines[i].split("=").next().unwrap().trim().to_string();
-            let l_node = lines[i].split("(").last().unwrap().split(",").next().unwrap().trim().to_string();
-            let mut r_node = lines[i].split("(").last().unwrap().split(",").last().unwrap().trim().to_string();
-            r_node = (&r_node[0..3]).to_string();
+            let test = Regex::new(r"[a-zA-Z0-9]{3}").unwrap();
+            let nodevec: Vec<&str> = test.captures_iter(lines[i])
+                .map(|capture| capture.get(0).unwrap().as_str())
+                .take(3) // Take the first 3 matches
+                .collect();
 
-            nodes.insert(start.clone() + "R", r_node);
-            nodes.insert(start.clone() + "L", l_node);
-            if start.chars().last().unwrap() == 'A' {
-                start_points.push(start.trim().to_string());
+            if !node_string.contains_key(nodevec[0].trim()) {
+                node_string.insert(nodevec[0].trim(), graph.add_node(nodevec[0].trim()));
+            }
+            if !node_string.contains_key(nodevec[1].trim()) {
+                node_string.insert(nodevec[1].trim(), graph.add_node(nodevec[1].trim()));
+            }
+            if !node_string.contains_key(nodevec[2].trim()) {
+                node_string.insert(nodevec[2].trim(), graph.add_node(nodevec[2].trim()));
+            }
+            graph.add_edge(*node_string.get(nodevec[0].trim()).unwrap(), *node_string.get(nodevec[1].trim()).unwrap(), ());
+            graph.add_edge(*node_string.get(nodevec[0].trim()).unwrap(), *node_string.get(nodevec[2].trim()).unwrap(), ());
+            if nodevec[0].ends_with('A') {
+                start_points.push(*node_string.get(nodevec[0].trim()).unwrap());
             }
         }
-
-
-        let mut end = "AAA".to_string();
-
-        // for start_point in &start_points {
-        //     println!("{start_point}")
-        // }
 
         let mut count: usize = 0;
 
@@ -71,8 +80,13 @@ pub mod day8 {
             let mut finished: bool = true;
 
             for start_point in &mut start_points {
-                *start_point = nodes.get(((*start_point).clone() + directions[(count % directions.len())].to_string().as_str()).as_str()).expect("{end}").to_string();
-                if (start_point.chars().last().unwrap() != 'Z') {
+                if (directions[count % directions.len()] == 'R') {
+                    *start_point = graph.edges(*start_point).next().unwrap().target();
+                } else {
+                    *start_point = graph.edges(*start_point).last().unwrap().target();
+                }
+
+                if !graph[*start_point].ends_with("Z") {
                     finished = false;
                 }
             }
@@ -84,63 +98,8 @@ pub mod day8 {
             if (finished) {
                 break 'outer;
             }
-
-
-            // end = nodes.get((end + directions[(count % directions.len())].to_string().as_str()).as_str()).expect("{end}").to_string();
         }
         println!("Day 8 Part 2: {count}");
-    }
-
-    fn part2_1() {
-        let input = fs::read_to_string("src/Day8/input.txt").unwrap();
-        let lines: Vec<&str> = input.lines().collect();
-        let directions: Vec<char> = lines[0].chars().collect();
-
-        let mut nodes: HashMap<String, (&str, &str)> = HashMap::new();
-        let mut start_points: Vec<&str> = Vec::new();
-
-        // Generate map with the nodes
-        for i in 2..lines.len() {
-            let parts: Vec<&str> = lines[i].split(|c| c == '=' || c == '(' || c == ',' || c == ')').map(|s| s.trim()).collect();
-            let start = parts[0];
-            let l_node = parts[2];
-            let r_node = &parts[3][0..3];
-            nodes.insert(format!("{}R", start.trim()), (l_node.trim(), r_node.trim()));
-            nodes.insert(format!("{}L", start.trim()), (l_node.trim(), r_node.trim()));
-            if start.ends_with('A') {
-                start_points.push(start);
-            }
-        }
-
-        let mut count: usize = 0;
-        let start_time = Instant::now(); // Record the start time
-        'outer: loop {
-            let mut finished = true;
-
-            for start_point in &mut start_points {
-                let (l_node, r_node) = nodes
-                    .get(&format!("{}{}", start_point, directions[count % directions.len()]))
-                    .expect("{end}");
-
-                *start_point = if start_point.ends_with('A') {
-                    l_node
-                } else {
-                    r_node
-                };
-                if !start_point.ends_with('Z') {
-                    finished = false;
-                }
-            }
-
-            count += 1;
-            if count % 1_000_000_000 == 0 {
-                println!("Elapsed Time: {}s", start_time.elapsed().as_secs()); // Calculate the elapsed time
-            }
-
-            if finished {
-                break 'outer;
-            }
-        }
-        println!("Day 8 Part 2: {}", count);
+        //21_003_205_388_413
     }
 }
