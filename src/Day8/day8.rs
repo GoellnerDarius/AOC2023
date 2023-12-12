@@ -12,7 +12,6 @@ pub mod day8 {
     }
 
 
-
     fn part1_2() {
         let input = fs::read_to_string("src/Day8/input.txt").unwrap();
         let lines: Vec<&str> = input.lines().collect();
@@ -22,10 +21,9 @@ pub mod day8 {
         let mut node_string: HashMap<&str, NodeIndex> = HashMap::new();
         let mut graph = DiGraph::new();
         for i in 2..lines.len() {
-            let test = Regex::new(r"[a-zA-Z0-9]{3}").unwrap();
-            let nodevec: Vec<&str> = test.captures_iter(lines[i])
+            let node_regex = Regex::new(r"[a-zA-Z0-9]{3}").unwrap();
+            let nodevec: Vec<&str> = node_regex.captures_iter(lines[i])
                 .map(|capture| capture.get(0).unwrap().as_str())
-                .take(3) // Take the first 3 matches
                 .collect();
 
             if !node_string.contains_key(nodevec[0].trim()) {
@@ -67,5 +65,4 @@ pub mod day8 {
         println!("Day 8 Part 2: {}", end_node_count.into_iter().fold(1, |acc, x| lcm(acc, x)));
         //21_003_205_388_413
     }
-
 }

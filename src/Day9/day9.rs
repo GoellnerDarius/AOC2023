@@ -3,7 +3,6 @@ pub mod day9 {
 
     pub fn solve() {
         part1();
-        // part2();
     }
 
     fn part1() {
@@ -45,9 +44,9 @@ pub mod day9 {
             sum_day2 +=predicion_lines[0].first().unwrap();
         }
         println!("Day 9 Part 1: {}", sum_day1);
-        //1980437560
-        println!("Day 9 Part 2: {}", sum_day2);
         //977
+        println!("Day 9 Part 2: {}", sum_day2);
+        //1980437560
     }
 }
 
